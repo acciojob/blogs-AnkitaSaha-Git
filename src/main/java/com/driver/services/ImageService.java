@@ -5,8 +5,6 @@ import com.driver.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class ImageService {
 
@@ -15,47 +13,41 @@ public class ImageService {
     @Autowired
     ImageRepository imageRepository2;
 
-    public Image addImage(Integer blogId, String description, String dimensions) throws Exception{
+    public Image addImage(Integer blogId, String description, String dimensions){
         //add an image to the blog
-        if(!blogRepository2.findById(blogId).isPresent()) {
-            throw new Exception();
-        }
         Blog blog = blogRepository2.findById(blogId).get();
-        Image image = new Image(blog,description,dimensions);
+        Image image = new Image();
+
+        image.setDescription(description);
+        image.setDimensions(dimensions);
+        image.setBlog(blog);
+
         blog.getImageList().add(image);
+
         blogRepository2.save(blog);
+
         return image;
-        //Here I am not explicitly adding image in image-repository because due to cascading effect
     }
 
     public void deleteImage(Integer id){
         imageRepository2.deleteById(id);
     }
 
-    public int countImagesInScreen(Integer id, String screenDimensions) throws Exception {
+    public int countImagesInScreen(Integer id, String screenDimensions) {
         //Find the number of images of given dimensions that can fit in a screen having `screenDimensions`
-        String [] scrarray = screenDimensions.split("X");
-        if(!imageRepository2.findById(id).isPresent()){
-            throw new Exception();
-        }
-        Image image = imageRepository2.findById(id).get();
+        String imageDimensions=imageRepository2.findById(id).get().getDimensions();
+        String[] imageXY=imageDimensions.split("X");
+        String[] screenXY=screenDimensions.split("X");
 
-        String imageDimensions = image.getDimensions();
-        String [] imgarray = imageDimensions.split("X");
+        int imageX=Integer.parseInt(imageXY[0]);
+        int imageY=Integer.parseInt(imageXY[1]);
 
-        int scrl = Integer.parseInt(scrarray[0]);
-        int scrb = Integer.parseInt(scrarray[1]);
+        int screenX=Integer.parseInt(screenXY[0]);
+        int screenY=Integer.parseInt(screenXY[1]);
 
-        int imgl = Integer.parseInt(imgarray[0]);
-        int imgb = Integer.parseInt(imgarray[1]);
+        int count=(screenX/imageX)*(screenY/imageY);
 
-        return no_Images(scrl,scrb,imgl,imgb);
 
-    }
-
-    private int no_Images(int scrl, int scrb, int imgl, int imgb) {
-        int lenC = scrl/imgl;
-        int lenB = scrb/imgb;
-        return lenC*lenB;
+        return count;
     }
 }
